@@ -8,9 +8,10 @@ A foobar2000 component that lets you browse and download album artwork from mult
 - Up to 3 results per API, displayed progressively as they arrive
 - Full-size image preview with fit-to-window / original-size toggle and pan/drag
 - Save as JPEG or PNG (configurable in preferences)
+- Save-to-tag: embed selected artwork directly into tags of currently playing local file
 - Shift+Save opens a Save As dialog for custom filename/location
 - Configurable overwrite behavior (ask / always / skip)
-- Right-click context menu: **Utilities > Grab artwork**
+- Right-click context menu: **Utilities > Grab artwork** (works without foo_artwork)
 - Inherits API keys and enabled API settings from foo_artwork automatically
 - Broad Unicode normalization for matching (Latin, Cyrillic, Greek)
 - Download icon hidden for internet streams (radio, YouTube, etc.)
@@ -18,7 +19,7 @@ A foobar2000 component that lets you browse and download album artwork from mult
 ## Requirements
 
 - foobar2000 v1.6+ (64-bit recommended)
-- [foo_artwork](https://github.com/jame25/foo_artwork)
+- [foo_artwork](https://github.com/jame25/foo_artwork) (optional -- provides the download icon overlay on the artwork panel; without it, use the right-click context menu)
 - API keys for Last.fm and Discogs configured in foo_artwork preferences
 
 iTunes, Deezer, and MusicBrainz require no API keys.
@@ -27,7 +28,7 @@ iTunes, Deezer, and MusicBrainz require no API keys.
 
 Copy `foo_artgrab.dll` into foobar2000's `components` directory and restart foobar2000.
 
-When foo_artwork is also installed, a download arrow icon appears in the bottom-left corner of the artwork panel on mouse hover.
+When foo_artwork is also installed, a download arrow icon appears in the bottom-left corner of the artwork panel on mouse hover. Without foo_artwork, you can still access the gallery via the right-click context menu (**Utilities > Grab artwork**).
 
 ## Usage
 
@@ -35,7 +36,8 @@ When foo_artwork is also installed, a download arrow icon appears in the bottom-
 2. Browse the gallery of results from all enabled APIs
 3. Click a thumbnail to select it; double-click to open a full-size preview
 4. Click **Save** to write the selected image to the album folder
-5. Hold **Shift** and click **Save** to choose a custom filename/location
+5. Click **Save-to-tag** to embed the selected image directly into the tags of the currently playing local file
+6. Hold **Shift** and click **Save** to choose a custom filename/location
 
 ## Preferences
 
