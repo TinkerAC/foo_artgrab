@@ -58,6 +58,7 @@ GalleryWindow::GalleryWindow(const char* artist, const char* album, const char* 
     , m_scroll_y(0)
     , m_content_height(0)
     , m_save_button(NULL)
+    , m_save_to_tag_button(NULL)
     , m_artist_label(NULL)
     , m_album_label(NULL)
     , m_artist_edit(NULL)
@@ -117,6 +118,17 @@ LRESULT GalleryWindow::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 
     // Disable Save until a selection is made
     ::EnableWindow(m_save_button, FALSE);
+
+    // Create Save-to-tag button
+    m_save_to_tag_button = ::CreateWindowW(
+        L"BUTTON", L"Save-to-tag",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        0, 0, 95, 28,
+        m_hWnd, (HMENU)(INT_PTR)ID_SAVE_TO_TAG_BUTTON,
+        NULL, NULL);
+
+    // Disable Save-to-tag until a selection is made
+    ::EnableWindow(m_save_to_tag_button, FALSE);
 
     // Convert artist/album to wide strings for edit controls
     auto to_wide = [](const std::string& s) -> std::wstring {
@@ -327,6 +339,7 @@ LRESULT GalleryWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lP
         if (!m_album_folder.empty()) {
             ::EnableWindow(m_save_button, TRUE);
         }
+        ::EnableWindow(m_save_to_tag_button, TRUE);
     } else {
         // Deselect
         if (m_selected_index >= 0 && m_selected_index < (int)m_cells.size()) {
@@ -334,6 +347,7 @@ LRESULT GalleryWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lP
         }
         m_selected_index = -1;
         ::EnableWindow(m_save_button, FALSE);
+        ::EnableWindow(m_save_to_tag_button, FALSE);
     }
 
     InvalidateRect(NULL, FALSE);
@@ -386,6 +400,10 @@ LRESULT GalleryWindow::OnCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/
     if (id == ID_SAVE_BUTTON) {
         bool shift_held = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
         DoSave(shift_held);
+        return 0;
+    }
+    if (id == ID_SAVE_TO_TAG_BUTTON) {
+        DoSaveToTag();
         return 0;
     }
     bHandled = FALSE;
@@ -491,6 +509,7 @@ void GalleryWindow::ResetSearch()
     m_scroll_y = 0;
     m_content_height = 0;
     ::EnableWindow(m_save_button, FALSE);
+    ::EnableWindow(m_save_to_tag_button, FALSE);
 
     // Read new values from edit controls
     WCHAR buf[512];
@@ -858,11 +877,21 @@ void GalleryWindow::RecalcLayout()
         m_content_height = section_bottom;
     }
 
-    // Position Save button in the status bar area
-    int btn_x = cw - 90;
+    // Position Save and Save-to-tag buttons in the status bar area
     int btn_y = client.bottom - STATUS_BAR_HEIGHT + 6;
+    int save_btn_w = 80;
+    int tag_btn_w = 115;
+    int btn_gap = 8;
+    int margin_right = 10;
+
+    int save_btn_x = cw - margin_right - save_btn_w;
+    int tag_btn_x = save_btn_x - btn_gap - tag_btn_w;
+
     if (m_save_button && ::IsWindow(m_save_button)) {
-        ::MoveWindow(m_save_button, btn_x, btn_y, 80, 28, TRUE);
+        ::MoveWindow(m_save_button, save_btn_x, btn_y, save_btn_w, 28, TRUE);
+    }
+    if (m_save_to_tag_button && ::IsWindow(m_save_to_tag_button)) {
+        ::MoveWindow(m_save_to_tag_button, tag_btn_x, btn_y, tag_btn_w, 28, TRUE);
     }
 
     // Position floating search panel controls at bottom-right with animation
@@ -1074,7 +1103,7 @@ void GalleryWindow::PaintStatusBar(Gdiplus::Graphics& g, const RECT& client)
     COLORREF textColor = GetSysColor(COLOR_WINDOWTEXT);
     Gdiplus::SolidBrush textBrush(Gdiplus::Color(GetRValue(textColor), GetGValue(textColor), GetBValue(textColor)));
     Gdiplus::Font statusFont(L"Segoe UI", 9);
-    Gdiplus::RectF textRect(8.0f, (float)(sy + 10), (float)(cw - 100), 20.0f);
+    Gdiplus::RectF textRect(8.0f, (float)(sy + 10), (float)(cw - 225), 20.0f);
     g.DrawString(m_status_text.c_str(), -1, &statusFont, textRect, nullptr, &textBrush);
 }
 
@@ -1265,6 +1294,158 @@ void GalleryWindow::DoSave(bool shift_held)
     } else {
         m_status_text = L"Save failed";
     }
+    InvalidateRect(NULL, FALSE);
+}
+
+void GalleryWindow::DoSaveToTag()
+{
+    if (m_selected_index < 0 || m_selected_index >= (int)m_cells.size()) return;
+
+    // Check if track is currently playing
+    metadb_handle_ptr track;
+    if (!playback_control::get()->get_now_playing(track)) {
+        m_status_text = L"Save-to-tag failed: no track currently playing";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    const char* playing_path = track->get_path();
+    if (!playing_path || filesystem::g_is_remote_or_unrecognized(playing_path)) {
+        m_status_text = L"Save-to-tag failed: currently playing item is not a local file";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    if (!album_art_editor::g_is_supported_path(playing_path)) {
+        m_status_text = L"Save-to-tag failed: file format does not support embedded artwork";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    const artwork_entry& entry = m_cells[m_selected_index].entry;
+    if (entry.data.get_size() == 0) {
+        m_status_text = L"Save-to-tag failed: no image data available";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    // Convert/encode image data using configured save format (JPEG or PNG)
+    IStream* in_stream = SHCreateMemStream(entry.data.get_ptr(), (UINT)entry.data.get_size());
+    if (!in_stream) {
+        m_status_text = L"Save-to-tag failed: could not read image data";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    Gdiplus::Image img(in_stream);
+    in_stream->Release();
+
+    if (img.GetLastStatus() != Gdiplus::Ok) {
+        m_status_text = L"Save-to-tag failed: invalid image data";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    CLSID encoderClsid;
+    bool use_png = (cfg_ag_save_format.get_value() == 1);
+    const WCHAR* mime = use_png ? L"image/png" : L"image/jpeg";
+    if (GetEncoderClsid(mime, &encoderClsid) < 0) {
+        m_status_text = use_png ? L"Save-to-tag failed: PNG encoder not found" : L"Save-to-tag failed: JPEG encoder not found";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    IStream* out_stream = nullptr;
+    if (FAILED(CreateStreamOnHGlobal(NULL, TRUE, &out_stream))) {
+        m_status_text = L"Save-to-tag failed: out of memory";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    Gdiplus::Status status;
+    if (use_png) {
+        status = img.Save(out_stream, &encoderClsid, nullptr);
+    } else {
+        Gdiplus::EncoderParameters params;
+        ULONG quality = (ULONG)cfg_ag_jpeg_quality.get_value();
+        params.Count = 1;
+        params.Parameter[0].Guid = Gdiplus::EncoderQuality;
+        params.Parameter[0].Type = Gdiplus::EncoderParameterValueTypeLong;
+        params.Parameter[0].NumberOfValues = 1;
+        params.Parameter[0].Value = &quality;
+        status = img.Save(out_stream, &encoderClsid, &params);
+    }
+
+    if (status != Gdiplus::Ok) {
+        out_stream->Release();
+        m_status_text = L"Save-to-tag failed: image encoding error";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    STATSTG stat = {};
+    out_stream->Stat(&stat, STATFLAG_NONAME);
+    size_t img_size = (size_t)stat.cbSize.QuadPart;
+    HGLOBAL hMem = NULL;
+    GetHGlobalFromStream(out_stream, &hMem);
+    void* pData = GlobalLock(hMem);
+    if (!pData || img_size == 0) {
+        if (pData) GlobalUnlock(hMem);
+        out_stream->Release();
+        m_status_text = L"Save-to-tag failed: memory lock error";
+        InvalidateRect(NULL, FALSE);
+        return;
+    }
+
+    album_art_data_ptr art_data = album_art_data_impl::g_create(pData, img_size);
+    GlobalUnlock(hMem);
+    out_stream->Release();
+
+    // Determine target artwork GUID
+    GUID art_guid = album_art_ids::cover_front;
+    if (is_back_cover(entry)) {
+        art_guid = album_art_ids::cover_back;
+    } else if (is_artist_image(entry)) {
+        art_guid = album_art_ids::artist;
+    }
+
+    try {
+        abort_callback_dummy abort;
+
+        // Acquire write lock to coordinate with playback decoder
+        file_lock_ptr lock = file_lock_manager::get()->acquire_write(playing_path, abort);
+
+        album_art_editor_instance_ptr editor = album_art_editor::g_open(nullptr, playing_path, abort);
+        if (editor.is_empty()) {
+            m_status_text = L"Save-to-tag failed: could not open file for editing";
+            InvalidateRect(NULL, FALSE);
+            return;
+        }
+
+        editor->set(art_guid, art_data, abort);
+        editor->commit(abort);
+
+        // Explicitly release lock before refreshing
+        lock.release();
+
+        // Invalidate foo_artwork cache and refresh
+        artgrab::invalidate_artwork_cache(m_artist.c_str(), m_album.c_str());
+        artgrab::refresh_artwork_panel();
+
+        // Dispatch metadb refresh for foobar2000
+        static_api_ptr_t<metadb_io>()->dispatch_refresh(track);
+
+        m_status_text = L"Saved artwork to tag of currently playing file";
+    }
+    catch (const std::exception& e) {
+        std::wostringstream ss;
+        ss << L"Save-to-tag failed: " << e.what();
+        m_status_text = ss.str();
+    }
+    catch (...) {
+        m_status_text = L"Save-to-tag failed: unknown error";
+    }
+
     InvalidateRect(NULL, FALSE);
 }
 
