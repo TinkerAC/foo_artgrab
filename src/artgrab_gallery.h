@@ -83,6 +83,7 @@ private:
 
     // Actions
     void DoSave(bool shift_held);
+    void DoSaveToTag();
     void DoPreview(int index);
     void StartSearch();
     void ResetSearch();
@@ -126,6 +127,7 @@ private:
 
     // Controls
     HWND m_save_button;
+    HWND m_save_to_tag_button;
     HWND m_artist_label;
     HWND m_album_label;
     HWND m_artist_edit;
@@ -151,6 +153,7 @@ private:
     static const int ID_ALBUM_EDIT = 2004;
     static const int ID_ARTIST_LABEL = 2005;
     static const int ID_ALBUM_LABEL = 2006;
+    static const int ID_SAVE_TO_TAG_BUTTON = 2007;
     static const int SEARCH_ICON_SIZE = 28;
     static const int SEARCH_ICON_MARGIN = 8;
     static const int SEARCH_PANEL_HEIGHT = 36;
