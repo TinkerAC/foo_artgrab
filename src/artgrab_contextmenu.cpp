@@ -39,20 +39,23 @@ public:
         metadb_handle_ptr track = p_data.get_item(0);
 
         // Extract artist, album, and file path using titleformat
-        pfc::string8 artist, album, path;
+        pfc::string8 artist, album, title, path;
 
         static_api_ptr_t<titleformat_compiler> compiler;
-        titleformat_object::ptr tf_artist, tf_album, tf_path;
+        titleformat_object::ptr tf_artist, tf_album, tf_title, tf_path;
 
         compiler->compile_safe_ex(tf_artist, "%artist%");
         compiler->compile_safe_ex(tf_album, "%album%");
+        compiler->compile_safe_ex(tf_title, "%title%");
         compiler->compile_safe_ex(tf_path, "%path%");
 
         track->format_title(nullptr, artist, tf_artist, nullptr);
         track->format_title(nullptr, album, tf_album, nullptr);
+        track->format_title(nullptr, title, tf_title, nullptr);
         track->format_title(nullptr, path, tf_path, nullptr);
 
-        auto* gallery = new artgrab::GalleryWindow(artist.get_ptr(), album.get_ptr(), path.get_ptr());
+        auto* gallery = new artgrab::GalleryWindow(
+            artist.get_ptr(), album.get_ptr(), title.get_ptr(), path.get_ptr());
         gallery->Show(core_api::get_main_window());
     }
 

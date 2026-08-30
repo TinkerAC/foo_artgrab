@@ -11,6 +11,15 @@
 
 namespace artgrab {
 
+struct api_result_limits {
+    int netease;
+    int itunes;
+    int deezer;
+    int lastfm;
+    int musicbrainz;
+    int discogs;
+};
+
 struct artwork_entry {
     pfc::array_t<t_uint8> data;
     pfc::string8 source;        // "iTunes", "Deezer", etc.
@@ -30,7 +39,8 @@ public:
     artwork_search(
         const char* artist,
         const char* album,
-        int max_results_per_api,
+        const char* title,
+        const api_result_limits& result_limits,
         bool include_back_covers,
         bool include_artist_images,
         on_result_callback on_result,
@@ -44,7 +54,8 @@ public:
 private:
     pfc::string8 m_artist;
     pfc::string8 m_album;
-    int m_max_results;
+    pfc::string8 m_title;
+    api_result_limits m_result_limits;
     on_result_callback m_on_result;
     on_api_done_callback m_on_api_done;
     on_all_done_callback m_on_all_done;
@@ -79,7 +90,7 @@ private:
         std::vector<pfc::string8>* release_ids = nullptr);
     static bool parse_musicbrainz_json_multi(const pfc::string8& json,
         std::vector<pfc::string8>& release_ids, const char* artist, int max_results);
-    static bool parse_netease_json_multi(const char* artist, const char* album,
+    static bool parse_netease_json_multi(const char* artist, const char* title,
         const pfc::string8& json, std::vector<pfc::string8>& urls, int max_results);
 };
 

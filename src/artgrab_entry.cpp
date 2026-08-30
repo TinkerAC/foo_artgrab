@@ -103,7 +103,27 @@ static initquit_factory_t<artgrab_initquit> g_artgrab_initquit;
 extern "C" __declspec(dllexport)
 void foo_artgrab_open(const char* artist, const char* album, const char* file_path) {
     if (!artist || !album) return;
-    auto* gallery = new artgrab::GalleryWindow(artist, album, file_path ? file_path : "");
+    // Recover the title for legacy foo_artwork callers from the now-playing item.
+    // Updated callers should use foo_artgrab_open_v2 and pass it explicitly.
+    pfc::string8 title;
+    metadb_handle_ptr now_playing;
+    static_api_ptr_t<playback_control> playback;
+    if (playback->get_now_playing(now_playing) &&
+        (!file_path || !file_path[0] || strcmp(now_playing->get_path(), file_path) == 0)) {
+        static_api_ptr_t<titleformat_compiler> compiler;
+        titleformat_object::ptr tf_title;
+        compiler->compile_safe_ex(tf_title, "%title%");
+        now_playing->format_title(nullptr, title, tf_title, nullptr);
+    }
+    auto* gallery = new artgrab::GalleryWindow(
+        artist, album, title.get_ptr(), file_path ? file_path : "");
+    gallery->Show(core_api::get_main_window());
+}
+
+extern "C" __declspec(dllexport)
+void foo_artgrab_open_v2(const char* artist, const char* album, const char* title, const char* file_path) {
+    if (!artist || !album || !title) return;
+    auto* gallery = new artgrab::GalleryWindow(artist, album, title, file_path ? file_path : "");
     gallery->Show(core_api::get_main_window());
 }
 

@@ -1,3 +1,4 @@
 EXPORTS
     foobar2000_get_interface
     foo_artgrab_open
+    foo_artgrab_open_v2

@@ -1,7 +1,7 @@
 #include "resource.h"
 #include <winresrc.h>
 
-IDD_PREFERENCES DIALOGEX 0, 0, 320, 258
+IDD_PREFERENCES DIALOGEX 0, 0, 320, 310
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "Segoe UI", 400, 0, 0x0
 BEGIN
@@ -17,10 +17,21 @@ BEGIN
     COMBOBOX        IDC_OVERWRITE_BEHAVIOR, 70, 80, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL
     LTEXT           "JPEG quality:", IDC_STATIC_QUALITY, 7, 100, 60, 8
     EDITTEXT        IDC_JPEG_QUALITY, 70, 98, 30, 14, ES_NUMBER
-    LTEXT           "Max results/API:", IDC_STATIC_MAXRESULTS, 7, 118, 60, 8
-    EDITTEXT        IDC_MAX_RESULTS, 70, 116, 30, 14, ES_NUMBER
-    LTEXT           "Timeout (sec):", IDC_STATIC_TIMEOUT, 7, 136, 60, 8
-    EDITTEXT        IDC_REQUEST_TIMEOUT, 70, 134, 30, 14, ES_NUMBER
-    CONTROL         "Include back covers in results", IDC_INCLUDE_BACK_COVERS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 7, 154, 180, 10
-    CONTROL         "Include artist images in results", IDC_INCLUDE_ARTIST_IMAGES, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 7, 172, 180, 10
+    GROUPBOX        "Maximum results per API", -1, 7, 114, 306, 76
+    LTEXT           "NetEase:", -1, 16, 128, 42, 8
+    EDITTEXT        IDC_NETEASE_MAX_RESULTS, 60, 125, 28, 14, ES_NUMBER
+    LTEXT           "iTunes:", -1, 112, 128, 36, 8
+    EDITTEXT        IDC_ITUNES_MAX_RESULTS, 150, 125, 28, 14, ES_NUMBER
+    LTEXT           "Deezer:", -1, 205, 128, 38, 8
+    EDITTEXT        IDC_DEEZER_MAX_RESULTS, 248, 125, 28, 14, ES_NUMBER
+    LTEXT           "Last.fm:", -1, 16, 148, 42, 8
+    EDITTEXT        IDC_LASTFM_MAX_RESULTS, 60, 145, 28, 14, ES_NUMBER
+    LTEXT           "MusicBrainz:", -1, 92, 148, 56, 8
+    EDITTEXT        IDC_MUSICBRAINZ_MAX_RESULTS, 150, 145, 28, 14, ES_NUMBER
+    LTEXT           "Discogs:", -1, 205, 148, 38, 8
+    EDITTEXT        IDC_DISCOGS_MAX_RESULTS, 248, 145, 28, 14, ES_NUMBER
+    LTEXT           "Timeout (sec):", IDC_STATIC_TIMEOUT, 7, 200, 60, 8
+    EDITTEXT        IDC_REQUEST_TIMEOUT, 70, 198, 30, 14, ES_NUMBER
+    CONTROL         "Include back covers in results", IDC_INCLUDE_BACK_COVERS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 7, 218, 180, 10
+    CONTROL         "Include artist images in results", IDC_INCLUDE_ARTIST_IMAGES, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 7, 236, 180, 10
 END

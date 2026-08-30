@@ -52,7 +52,7 @@ Found under **Preferences > Tools > Artwork Grabber**.
 | Save format | JPEG | Save as JPEG or PNG (filenames update automatically) |
 | Overwrite behavior | Ask every time | Ask / Always overwrite / Skip if exists |
 | JPEG quality | 95 | Encoding quality (50-100, disabled when format is PNG) |
-| Max results per API | 3 | How many images to fetch per API (1-5) |
+| Maximum results per API | 3 each | Independently configurable for NetEase, iTunes, Deezer, Last.fm, MusicBrainz, and Discogs (1-20) |
 | Request timeout | 10s | HTTP timeout per request |
 | Include back covers | Off | Fetch back covers from MusicBrainz/Discogs |
 | Include artist images | Off | Fetch artist images from Deezer |
@@ -97,7 +97,7 @@ foo_artgrab requires a small patch to foo_artwork to add the download icon overl
 
 foo_artgrab is a standalone DLL with no compile-time dependency on foo_artwork. The two components communicate at runtime via `GetModuleHandle`/`GetProcAddress`:
 
-- **foo_artwork -> foo_artgrab**: calls `foo_artgrab_open(artist, album, file_path)` when the download icon is clicked
+- **foo_artwork -> foo_artgrab**: legacy callers use `foo_artgrab_open(artist, album, file_path)`; updated callers can use `foo_artgrab_open_v2(artist, album, title, file_path)` so NetEase searches by artist and track title
 - **foo_artgrab -> foo_artwork**: reads API keys via `foo_artwork_get_lastfm_key()` etc., and checks which APIs are enabled via `foo_artwork_is_api_enabled(api_name)`
 
 If either component is missing, the other continues to function normally.

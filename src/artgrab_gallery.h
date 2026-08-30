@@ -9,7 +9,7 @@ namespace artgrab {
 
 class GalleryWindow : public CWindowImpl<GalleryWindow> {
 public:
-    GalleryWindow(const char* artist, const char* album, const char* file_path);
+    GalleryWindow(const char* artist, const char* album, const char* title, const char* file_path);
     ~GalleryWindow();
 
     DECLARE_WND_CLASS_EX(L"ArtGrabGallery", CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW, COLOR_WINDOW);
@@ -106,8 +106,10 @@ private:
     // Search state
     std::string m_artist;
     std::string m_album;
+    std::string m_title;
     std::string m_search_artist;
     std::string m_search_album;
+    std::string m_search_title;
     std::string m_file_path;
     std::string m_album_folder;
     std::shared_ptr<artwork_search> m_search;
@@ -132,6 +134,8 @@ private:
     HWND m_album_label;
     HWND m_artist_edit;
     HWND m_album_edit;
+    HWND m_title_label;
+    HWND m_title_edit;
     HWND m_search_button;
     bool m_search_panel_open;
 
@@ -154,6 +158,8 @@ private:
     static const int ID_ARTIST_LABEL = 2005;
     static const int ID_ALBUM_LABEL = 2006;
     static const int ID_SAVE_TO_TAG_BUTTON = 2007;
+    static const int ID_TITLE_EDIT = 2008;
+    static const int ID_TITLE_LABEL = 2009;
     static const int SEARCH_ICON_SIZE = 28;
     static const int SEARCH_ICON_MARGIN = 8;
     static const int SEARCH_PANEL_HEIGHT = 36;

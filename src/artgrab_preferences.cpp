@@ -12,8 +12,6 @@ static constexpr GUID guid_ag_save_filename = { 0xb1a2c3d4, 0x0001, 0x0001, { 0x
 static constexpr GUID guid_ag_overwrite = { 0xb1a2c3d4, 0x0002, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
 // {B1A2C3D4-0003-0001-A1B2-C3D4E5F60718}
 static constexpr GUID guid_ag_jpeg_quality = { 0xb1a2c3d4, 0x0003, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
-// {B1A2C3D4-0004-0001-A1B2-C3D4E5F60718}
-static constexpr GUID guid_ag_max_results = { 0xb1a2c3d4, 0x0004, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
 // {B1A2C3D4-0005-0001-A1B2-C3D4E5F60718}
 static constexpr GUID guid_ag_http_timeout = { 0xb1a2c3d4, 0x0005, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
 // {B1A2C3D4-0006-0001-A1B2-C3D4E5F60718}
@@ -30,6 +28,12 @@ static constexpr GUID guid_ag_back_cover_filename = { 0xb1a2c3d4, 0x0010, 0x0001
 static constexpr GUID guid_ag_artist_image_filename = { 0xb1a2c3d4, 0x0011, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
 // {B1A2C3D4-0012-0001-A1B2-C3D4E5F60718}
 static constexpr GUID guid_ag_save_format = { 0xb1a2c3d4, 0x0012, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
+static constexpr GUID guid_ag_netease_max_results = { 0xb1a2c3d4, 0x0013, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
+static constexpr GUID guid_ag_itunes_max_results = { 0xb1a2c3d4, 0x0014, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
+static constexpr GUID guid_ag_deezer_max_results = { 0xb1a2c3d4, 0x0015, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
+static constexpr GUID guid_ag_lastfm_max_results = { 0xb1a2c3d4, 0x0016, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
+static constexpr GUID guid_ag_musicbrainz_max_results = { 0xb1a2c3d4, 0x0017, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
+static constexpr GUID guid_ag_discogs_max_results = { 0xb1a2c3d4, 0x0018, 0x0001, { 0xa1, 0xb2, 0xc3, 0xd4, 0xe5, 0xf6, 0x07, 0x18 } };
 
 // ============================================================================
 // cfg_var instantiations
@@ -38,7 +42,12 @@ static constexpr GUID guid_ag_save_format = { 0xb1a2c3d4, 0x0012, 0x0001, { 0xa1
 cfg_string cfg_ag_save_filename(guid_ag_save_filename, "Cover.jpg");
 cfg_int cfg_ag_overwrite(guid_ag_overwrite, 0);             // 0=Ask, 1=Always, 2=Skip
 cfg_int cfg_ag_jpeg_quality(guid_ag_jpeg_quality, 95);
-cfg_int cfg_ag_max_results(guid_ag_max_results, 3);
+cfg_int cfg_ag_netease_max_results(guid_ag_netease_max_results, 3);
+cfg_int cfg_ag_itunes_max_results(guid_ag_itunes_max_results, 3);
+cfg_int cfg_ag_deezer_max_results(guid_ag_deezer_max_results, 3);
+cfg_int cfg_ag_lastfm_max_results(guid_ag_lastfm_max_results, 3);
+cfg_int cfg_ag_musicbrainz_max_results(guid_ag_musicbrainz_max_results, 3);
+cfg_int cfg_ag_discogs_max_results(guid_ag_discogs_max_results, 3);
 cfg_int cfg_ag_http_timeout(guid_ag_http_timeout, 10);
 cfg_int cfg_ag_retry_count(guid_ag_retry_count, 2);
 cfg_string cfg_cache_folder(guid_ag_cache_folder, "");
@@ -136,7 +145,12 @@ void artgrab_preferences::update_controls()
 
     // Numeric fields
     SetDlgItemInt(m_hwnd, IDC_JPEG_QUALITY, (UINT)cfg_ag_jpeg_quality.get_value(), FALSE);
-    SetDlgItemInt(m_hwnd, IDC_MAX_RESULTS, (UINT)cfg_ag_max_results.get_value(), FALSE);
+    SetDlgItemInt(m_hwnd, IDC_NETEASE_MAX_RESULTS, (UINT)cfg_ag_netease_max_results.get_value(), FALSE);
+    SetDlgItemInt(m_hwnd, IDC_ITUNES_MAX_RESULTS, (UINT)cfg_ag_itunes_max_results.get_value(), FALSE);
+    SetDlgItemInt(m_hwnd, IDC_DEEZER_MAX_RESULTS, (UINT)cfg_ag_deezer_max_results.get_value(), FALSE);
+    SetDlgItemInt(m_hwnd, IDC_LASTFM_MAX_RESULTS, (UINT)cfg_ag_lastfm_max_results.get_value(), FALSE);
+    SetDlgItemInt(m_hwnd, IDC_MUSICBRAINZ_MAX_RESULTS, (UINT)cfg_ag_musicbrainz_max_results.get_value(), FALSE);
+    SetDlgItemInt(m_hwnd, IDC_DISCOGS_MAX_RESULTS, (UINT)cfg_ag_discogs_max_results.get_value(), FALSE);
     SetDlgItemInt(m_hwnd, IDC_REQUEST_TIMEOUT, (UINT)cfg_ag_http_timeout.get_value(), FALSE);
 
     // Back covers checkbox
@@ -181,8 +195,18 @@ void artgrab_preferences::apply_settings()
     val = GetDlgItemInt(m_hwnd, IDC_JPEG_QUALITY, &ok, FALSE);
     if (ok) cfg_ag_jpeg_quality = (int)val;
 
-    val = GetDlgItemInt(m_hwnd, IDC_MAX_RESULTS, &ok, FALSE);
-    if (ok) cfg_ag_max_results = (int)val;
+    struct limit_control { int id; cfg_int* value; } limits[] = {
+        { IDC_NETEASE_MAX_RESULTS, &cfg_ag_netease_max_results },
+        { IDC_ITUNES_MAX_RESULTS, &cfg_ag_itunes_max_results },
+        { IDC_DEEZER_MAX_RESULTS, &cfg_ag_deezer_max_results },
+        { IDC_LASTFM_MAX_RESULTS, &cfg_ag_lastfm_max_results },
+        { IDC_MUSICBRAINZ_MAX_RESULTS, &cfg_ag_musicbrainz_max_results },
+        { IDC_DISCOGS_MAX_RESULTS, &cfg_ag_discogs_max_results },
+    };
+    for (const auto& limit : limits) {
+        val = GetDlgItemInt(m_hwnd, limit.id, &ok, FALSE);
+        if (ok) *limit.value = (int)(std::max)(1u, (std::min)(val, 20u));
+    }
 
     val = GetDlgItemInt(m_hwnd, IDC_REQUEST_TIMEOUT, &ok, FALSE);
     if (ok) cfg_ag_http_timeout = (int)val;
@@ -206,7 +230,12 @@ void artgrab_preferences::reset_settings()
     cfg_ag_save_format = 0;
     cfg_ag_overwrite = 0;
     cfg_ag_jpeg_quality = 95;
-    cfg_ag_max_results = 3;
+    cfg_ag_netease_max_results = 3;
+    cfg_ag_itunes_max_results = 3;
+    cfg_ag_deezer_max_results = 3;
+    cfg_ag_lastfm_max_results = 3;
+    cfg_ag_musicbrainz_max_results = 3;
+    cfg_ag_discogs_max_results = 3;
     cfg_ag_http_timeout = 10;
     cfg_ag_retry_count = 2;
     cfg_ag_include_back_covers = false;
@@ -241,7 +270,12 @@ INT_PTR CALLBACK artgrab_preferences::ConfigProc(HWND hwnd, UINT msg, WPARAM wp,
         case IDC_BACK_COVER_FILENAME:
         case IDC_ARTIST_IMAGE_FILENAME:
         case IDC_JPEG_QUALITY:
-        case IDC_MAX_RESULTS:
+        case IDC_NETEASE_MAX_RESULTS:
+        case IDC_ITUNES_MAX_RESULTS:
+        case IDC_DEEZER_MAX_RESULTS:
+        case IDC_LASTFM_MAX_RESULTS:
+        case IDC_MUSICBRAINZ_MAX_RESULTS:
+        case IDC_DISCOGS_MAX_RESULTS:
         case IDC_REQUEST_TIMEOUT:
             if (HIWORD(wp) == EN_CHANGE) {
                 self->on_changed();

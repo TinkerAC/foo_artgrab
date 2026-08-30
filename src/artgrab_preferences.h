@@ -5,7 +5,12 @@
 extern cfg_string cfg_ag_save_filename;
 extern cfg_int cfg_ag_overwrite;
 extern cfg_int cfg_ag_jpeg_quality;
-extern cfg_int cfg_ag_max_results;
+extern cfg_int cfg_ag_netease_max_results;
+extern cfg_int cfg_ag_itunes_max_results;
+extern cfg_int cfg_ag_deezer_max_results;
+extern cfg_int cfg_ag_lastfm_max_results;
+extern cfg_int cfg_ag_musicbrainz_max_results;
+extern cfg_int cfg_ag_discogs_max_results;
 extern cfg_int cfg_ag_http_timeout;
 extern cfg_int cfg_ag_retry_count;
 
