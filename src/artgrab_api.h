@@ -58,6 +58,7 @@ private:
     void search_lastfm();
     void search_musicbrainz();
     void search_discogs();
+    void search_netease();
     void fetch_back_covers(const std::vector<pfc::string8>& release_ids);
     void fetch_discogs_back_covers(const std::vector<pfc::string8>& release_ids);
     void fetch_artist_images(const std::vector<pfc::string8>& artist_ids);
@@ -78,6 +79,8 @@ private:
         std::vector<pfc::string8>* release_ids = nullptr);
     static bool parse_musicbrainz_json_multi(const pfc::string8& json,
         std::vector<pfc::string8>& release_ids, const char* artist, int max_results);
+    static bool parse_netease_json_multi(const char* artist, const char* album,
+        const pfc::string8& json, std::vector<pfc::string8>& urls, int max_results);
 };
 
 } // namespace artgrab

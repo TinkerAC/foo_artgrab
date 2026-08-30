@@ -1,10 +1,11 @@
 # foo_artgrab (Artwork Grabber)
 
-A foobar2000 component that lets you browse and download album artwork from multiple online sources. Hover over the artwork panel in [foo_artwork](https://github.com/jame25/foo_artwork) to reveal a download icon, or right-click any track and select **Utilities > Grab artwork**. Browse a gallery of results, preview full-size images, and save your pick as JPEG or PNG to the album folder.
+A foobar2000 component that lets you browse and download album artwork from multiple online sources. This enhanced build adds NetEase Cloud Music artwork through the owner's [API Enhanced deployment](https://api-enhanced-virid-eight.vercel.app/). Hover over the artwork panel in [foo_artwork](https://github.com/jame25/foo_artwork) to reveal a download icon, or right-click any track and select **Utilities > Grab artwork**. Browse a gallery of results, preview full-size images, and save your pick as JPEG or PNG to the album folder.
 
 ## Features
 
-- Searches only the APIs enabled in foo_artwork preferences (iTunes, Deezer, Last.fm, MusicBrainz/CoverArtArchive, Discogs)
+- Adds NetEase Cloud Music as an always-on artwork source through the configured API Enhanced deployment
+- Also searches APIs enabled in foo_artwork preferences (iTunes, Deezer, Last.fm, MusicBrainz/CoverArtArchive, Discogs)
 - Up to 3 results per API, displayed progressively as they arrive
 - Full-size image preview with fit-to-window / original-size toggle and pan/drag
 - Save as JPEG or PNG (configurable in preferences)
@@ -75,6 +76,13 @@ msbuild src\foo_artgrab.vcxproj /p:Configuration=Release /p:Platform=Win32
 ```
 
 Output DLLs are written to `x64\Release\foo_artgrab.dll` and `Win32\Release\foo_artgrab.dll` respectively.
+
+### Build without a Windows PC
+
+The **Build enhanced component** GitHub Actions workflow runs on a Windows runner,
+downloads the matching foobar2000/Columns UI SDK sources, builds the required
+libraries, and publishes installable x64 and Win32 `.fb2k-component` artifacts.
+Open the repository's **Actions** tab, select the workflow, and choose **Run workflow**.
 
 ### foo_artwork changes
 

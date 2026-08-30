@@ -1,0 +1,76 @@
+name: Build enhanced component
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - ".github/workflows/build-enhanced.yml"
+
+jobs:
+  build:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        platform: [x64, Win32]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Download matching foobar2000 and Columns UI SDKs
+        shell: pwsh
+        run: |
+          git clone --filter=blob:none https://github.com/reupen/columns_ui.git src/columns_ui
+          git -C src/columns_ui checkout 8711d87a88df5e4f877da0b1dab0922372193ffb
+          git -C src/columns_ui submodule update --init --recursive --depth 1
+          New-Item -ItemType Directory -Force src/nlohmann | Out-Null
+          Invoke-WebRequest -Uri https://raw.githubusercontent.com/nlohmann/json/v3.12.0/single_include/nlohmann/json.hpp -OutFile src/nlohmann/json.hpp
+
+      - name: Build SDK libraries
+        shell: pwsh
+        run: |
+          $sdk = Resolve-Path src/columns_ui
+          msbuild "$sdk/vc18/columns_ui-public.sln" /m /t:pfc,foobar2000_SDK,columns_ui_sdk,shared /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:PlatformToolset=v143
+
+          $arch = "${{ matrix.platform }}".ToLower()
+          $built = Join-Path $sdk "vc18/release-$arch-v143"
+          if ('${{ matrix.platform }}' -eq 'x64') {
+            $fbOut = Join-Path $sdk 'foobar2000/SDK/x64/foobar2000_SDK'
+            $pfcOut = Join-Path $sdk 'pfc/x64/pfc'
+            $cuiOut = Join-Path $sdk 'columns_ui-sdk/x64/columns_ui_sdk'
+            $sharedName = 'shared-x64.lib'
+          } else {
+            $fbOut = Join-Path $sdk 'foobar2000/SDK/win32/foobar2000_SDK'
+            $pfcOut = Join-Path $sdk 'pfc/win32/pfc'
+            $cuiOut = Join-Path $sdk 'columns_ui-sdk/win32/columns_ui_sdk'
+            $sharedName = 'shared-Win32.lib'
+          }
+          New-Item -ItemType Directory -Force $fbOut, $pfcOut, $cuiOut | Out-Null
+          Copy-Item "$built/foobar2000_SDK/foobar2000_SDK.lib" "$fbOut/foobar2000_SDK.lib"
+          Copy-Item "$built/pfc/pfc.lib" "$pfcOut/pfc.lib"
+          Copy-Item "$built/columns_ui-sdk/columns_ui-sdk.lib" "$cuiOut/columns_ui_sdk.lib"
+          Copy-Item "$built/shared.lib" (Join-Path $sdk "foobar2000/shared/$sharedName")
+
+      - name: Build foo_artgrab
+        shell: pwsh
+        run: |
+          msbuild src/foo_artgrab.vcxproj /m /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:PlatformToolset=v143 "/p:SolutionDir=$pwd\"
+
+      - name: Package component
+        shell: pwsh
+        run: |
+          $staging = Join-Path $env:RUNNER_TEMP 'foo_artgrab-package'
+          New-Item -ItemType Directory -Force $staging | Out-Null
+          Copy-Item "${{ matrix.platform }}/Release/foo_artgrab.dll" "$staging/foo_artgrab.dll"
+          Compress-Archive -Path "$staging/*" -DestinationPath "foo_artgrab-${{ matrix.platform }}.zip"
+          Move-Item "foo_artgrab-${{ matrix.platform }}.zip" "foo_artgrab-${{ matrix.platform }}.fb2k-component"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: foo_artgrab-enhanced-${{ matrix.platform }}
+          path: foo_artgrab-${{ matrix.platform }}.fb2k-component
+          if-no-files-found: error

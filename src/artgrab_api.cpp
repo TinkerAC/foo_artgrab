@@ -134,6 +134,7 @@ artwork_search::artwork_search(const char* artist, const char* album, int max_re
 void artwork_search::start() {
     struct api_entry { const char* name; void (artwork_search::*fn)(); };
     api_entry apis[] = {
+        { "NetEase",     &artwork_search::search_netease },
         { "iTunes",      &artwork_search::search_itunes },
         { "Deezer",      &artwork_search::search_deezer },
         { "Last.fm",     &artwork_search::search_lastfm },
@@ -144,7 +145,9 @@ void artwork_search::start() {
     // Count enabled APIs first
     int count = 0;
     for (auto& api : apis) {
-        if (artgrab::is_api_enabled(api.name)) count++;
+        // NetEase is supplied by this enhanced component and is independent of
+        // foo_artwork's list of built-in providers.
+        if (strcmp(api.name, "NetEase") == 0 || artgrab::is_api_enabled(api.name)) count++;
     }
 
     // Back covers count as separate "APIs" for completion tracking
@@ -162,7 +165,7 @@ void artwork_search::start() {
 
     m_apis_remaining = count;
     for (auto& api : apis) {
-        if (artgrab::is_api_enabled(api.name)) {
+        if (strcmp(api.name, "NetEase") == 0 || artgrab::is_api_enabled(api.name)) {
             (this->*api.fn)();
         }
     }
@@ -224,6 +227,41 @@ void artwork_search::download_and_deliver(const char* url, const char* source,
             int remaining = --(*pending_downloads);
             if (remaining == 0) {
                 self->api_finished(api_copy.get_ptr(), had_any_results->load());
+            }
+        });
+}
+
+// ============================================================================
+// search_netease -- NetEase Cloud Music via the user's API Enhanced deployment
+// ============================================================================
+
+void artwork_search::search_netease() {
+    pfc::string8 query;
+    query << m_artist << " " << m_album;
+
+    pfc::string8 url = "https://api-enhanced-virid-eight.vercel.app/cloudsearch?keywords=";
+    url << artgrab::url_encode(query) << "&type=10&limit=20";
+
+    pfc::string8 artist_str = m_artist;
+    pfc::string8 album_str = m_album;
+    int max_results = m_max_results;
+
+    auto self = shared_from_this();
+    async_io_manager::instance().http_get_async(url,
+        [self, artist_str, album_str, max_results](bool success, const pfc::string8& response, const pfc::string8& error) {
+            if (self->m_cancelled) { self->api_finished("NetEase", false); return; }
+            if (!success) { self->api_finished("NetEase", false); return; }
+
+            std::vector<pfc::string8> urls;
+            if (!parse_netease_json_multi(artist_str, album_str, response, urls, max_results) || urls.empty()) {
+                self->api_finished("NetEase", false);
+                return;
+            }
+
+            auto pending = std::make_shared<std::atomic<int>>((int)urls.size());
+            auto had_any = std::make_shared<std::atomic<bool>>(false);
+            for (const auto& img_url : urls) {
+                self->download_and_deliver(img_url.get_ptr(), "NetEase", pending, had_any, "NetEase");
             }
         });
 }
@@ -657,6 +695,68 @@ void artwork_search::fetch_artist_images(const std::vector<pfc::string8>& artist
 // ============================================================================
 // Multi-result JSON parsers
 // ============================================================================
+
+bool artwork_search::parse_netease_json_multi(const char* artist, const char* album,
+    const pfc::string8& json_in, std::vector<pfc::string8>& urls, int max_results) {
+    try {
+        json data = json::parse(std::string(json_in.get_ptr()));
+        if (!data.contains("code") || data["code"].get<int>() != 200 ||
+            !data.contains("result") || !data["result"].contains("albums") ||
+            !data["result"]["albums"].is_array()) {
+            return false;
+        }
+
+        const json& albums = data["result"]["albums"];
+        const std::string wanted_artist(artist);
+        const std::string wanted_album(album);
+        std::set<std::string> seen_urls;
+
+        auto item_artist_matches = [&](const json& item) {
+            if (item.contains("artist") && item["artist"].is_object() &&
+                item["artist"].contains("name") && item["artist"]["name"].is_string() &&
+                artists_match(item["artist"]["name"].get<std::string>(), wanted_artist)) {
+                return true;
+            }
+            if (item.contains("artists") && item["artists"].is_array()) {
+                for (const auto& item_artist : item["artists"]) {
+                    if (item_artist.contains("name") && item_artist["name"].is_string() &&
+                        artists_match(item_artist["name"].get<std::string>(), wanted_artist)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
+        auto add_url = [&](const json& item) {
+            if (!item.contains("picUrl") || !item["picUrl"].is_string()) return;
+            std::string image_url = item["picUrl"].get<std::string>();
+            if (image_url.empty()) return;
+            if (image_url.compare(0, 7, "http://") == 0) image_url.replace(0, 7, "https://");
+            image_url += (image_url.find('?') == std::string::npos ? "?" : "&");
+            image_url += "param=1200y1200";
+            if (seen_urls.insert(image_url).second) urls.emplace_back(image_url.c_str());
+        };
+
+        // Prefer an exact/fuzzy album and artist match, then accept other albums
+        // by the same artist to mirror the fallback behaviour of other providers.
+        for (const auto& item : albums) {
+            if ((int)urls.size() >= max_results) break;
+            if (!item.contains("name") || !item["name"].is_string()) continue;
+            if (strings_match_fuzzy(item["name"].get<std::string>(), wanted_album) && item_artist_matches(item)) {
+                add_url(item);
+            }
+        }
+        for (const auto& item : albums) {
+            if ((int)urls.size() >= max_results) break;
+            if (item_artist_matches(item)) add_url(item);
+        }
+
+        return !urls.empty();
+    } catch (const std::exception&) {
+        return false;
+    }
+}
 
 bool artwork_search::parse_itunes_json_multi(const char* artist, const char* album,
     const pfc::string8& json_in, std::vector<pfc::string8>& urls, int max_results) {

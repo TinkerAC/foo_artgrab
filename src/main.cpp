@@ -2,8 +2,8 @@
 
 DECLARE_COMPONENT_VERSION(
     "Artwork Grabber",
-    "1.0.6",
-    "Browse and download album artwork from multiple APIs.\n"
+    "1.1.0-enhanced",
+    "Browse and download album artwork from multiple APIs, including NetEase.\n"
     "Click download arrow in foo_artwork panel to access."
 );
 
