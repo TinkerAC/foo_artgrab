@@ -9,7 +9,7 @@ A foobar2000 component that lets you browse and download album artwork from mult
 - Up to 3 results per API, displayed progressively as they arrive
 - Full-size image preview with fit-to-window / original-size toggle and pan/drag
 - Save as JPEG or PNG (configurable in preferences)
-- Save-to-tag: embed selected artwork directly into tags of currently playing local file
+- Save-to-tag: embed selected artwork directly into tags of the originally selected local file
 - Shift+Save opens a Save As dialog for custom filename/location
 - Configurable overwrite behavior (ask / always / skip)
 - Right-click context menu: **Utilities > Grab artwork** (works without foo_artwork)
@@ -37,7 +37,7 @@ When foo_artwork is also installed, a download arrow icon appears in the bottom-
 2. Browse the gallery of results from all enabled APIs
 3. Click a thumbnail to select it; double-click to open a full-size preview
 4. Click **Save** to write the selected image to the album folder
-5. Click **Save-to-tag** to embed the selected image directly into the tags of the currently playing local file
+5. Click **Save-to-tag** to embed the selected image directly into the originally selected local track, even if playback changes
 6. Hold **Shift** and click **Save** to choose a custom filename/location
 
 ## Preferences

@@ -55,7 +55,7 @@ public:
         track->format_title(nullptr, path, tf_path, nullptr);
 
         auto* gallery = new artgrab::GalleryWindow(
-            artist.get_ptr(), album.get_ptr(), title.get_ptr(), path.get_ptr());
+            artist.get_ptr(), album.get_ptr(), title.get_ptr(), path.get_ptr(), track);
         gallery->Show(core_api::get_main_window());
     }
 

@@ -116,14 +116,22 @@ void foo_artgrab_open(const char* artist, const char* album, const char* file_pa
         now_playing->format_title(nullptr, title, tf_title, nullptr);
     }
     auto* gallery = new artgrab::GalleryWindow(
-        artist, album, title.get_ptr(), file_path ? file_path : "");
+        artist, album, title.get_ptr(), file_path ? file_path : "", now_playing);
     gallery->Show(core_api::get_main_window());
 }
 
 extern "C" __declspec(dllexport)
 void foo_artgrab_open_v2(const char* artist, const char* album, const char* title, const char* file_path) {
     if (!artist || !album || !title) return;
-    auto* gallery = new artgrab::GalleryWindow(artist, album, title, file_path ? file_path : "");
+    metadb_handle_ptr target;
+    metadb_handle_ptr now_playing;
+    static_api_ptr_t<playback_control> playback;
+    if (playback->get_now_playing(now_playing) &&
+        (!file_path || !file_path[0] || strcmp(now_playing->get_path(), file_path) == 0)) {
+        target = now_playing;
+    }
+    auto* gallery = new artgrab::GalleryWindow(
+        artist, album, title, file_path ? file_path : "", target);
     gallery->Show(core_api::get_main_window());
 }
 

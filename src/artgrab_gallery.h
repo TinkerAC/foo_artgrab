@@ -9,7 +9,8 @@ namespace artgrab {
 
 class GalleryWindow : public CWindowImpl<GalleryWindow> {
 public:
-    GalleryWindow(const char* artist, const char* album, const char* title, const char* file_path);
+    GalleryWindow(const char* artist, const char* album, const char* title,
+        const char* file_path, metadb_handle_ptr target_track);
     ~GalleryWindow();
 
     DECLARE_WND_CLASS_EX(L"ArtGrabGallery", CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW, COLOR_WINDOW);
@@ -111,6 +112,7 @@ private:
     std::string m_search_album;
     std::string m_search_title;
     std::string m_file_path;
+    metadb_handle_ptr m_target_track;
     std::string m_album_folder;
     std::shared_ptr<artwork_search> m_search;
 

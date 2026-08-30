@@ -49,11 +49,13 @@ namespace artgrab {
 // Construction / Destruction
 // ---------------------------------------------------------------------------
 
-GalleryWindow::GalleryWindow(const char* artist, const char* album, const char* title, const char* file_path)
+GalleryWindow::GalleryWindow(const char* artist, const char* album, const char* title,
+    const char* file_path, metadb_handle_ptr target_track)
     : m_artist(artist ? artist : "")
     , m_album(album ? album : "")
     , m_title(title ? title : "")
     , m_file_path(file_path ? file_path : "")
+    , m_target_track(target_track)
     , m_selected_index(-1)
     , m_all_done(false)
     , m_scroll_y(0)
@@ -1342,22 +1344,23 @@ void GalleryWindow::DoSaveToTag()
 {
     if (m_selected_index < 0 || m_selected_index >= (int)m_cells.size()) return;
 
-    // Check if track is currently playing
-    metadb_handle_ptr track;
-    if (!playback_control::get()->get_now_playing(track)) {
-        m_status_text = L"Save-to-tag failed: no track currently playing";
+    // Always write to the item that opened this gallery. The target handle is
+    // retained for the lifetime of the window, so playback changes are irrelevant.
+    metadb_handle_ptr track = m_target_track;
+    if (track.is_empty()) {
+        m_status_text = L"Save-to-tag failed: original track is unavailable";
         InvalidateRect(NULL, FALSE);
         return;
     }
 
-    const char* playing_path = track->get_path();
-    if (!playing_path || filesystem::g_is_remote_or_unrecognized(playing_path)) {
-        m_status_text = L"Save-to-tag failed: currently playing item is not a local file";
+    const char* target_path = track->get_path();
+    if (!target_path || filesystem::g_is_remote_or_unrecognized(target_path)) {
+        m_status_text = L"Save-to-tag failed: selected item is not a local file";
         InvalidateRect(NULL, FALSE);
         return;
     }
 
-    if (!album_art_editor::g_is_supported_path(playing_path)) {
+    if (!album_art_editor::g_is_supported_path(target_path)) {
         m_status_text = L"Save-to-tag failed: file format does not support embedded artwork";
         InvalidateRect(NULL, FALSE);
         return;
@@ -1454,9 +1457,9 @@ void GalleryWindow::DoSaveToTag()
         abort_callback_dummy abort;
 
         // Acquire write lock to coordinate with playback decoder
-        file_lock_ptr lock = file_lock_manager::get()->acquire_write(playing_path, abort);
+        file_lock_ptr lock = file_lock_manager::get()->acquire_write(target_path, abort);
 
-        album_art_editor_instance_ptr editor = album_art_editor::g_open(nullptr, playing_path, abort);
+        album_art_editor_instance_ptr editor = album_art_editor::g_open(nullptr, target_path, abort);
         if (editor.is_empty()) {
             m_status_text = L"Save-to-tag failed: could not open file for editing";
             InvalidateRect(NULL, FALSE);
@@ -1476,7 +1479,7 @@ void GalleryWindow::DoSaveToTag()
         // Dispatch metadb refresh for foobar2000
         static_api_ptr_t<metadb_io>()->dispatch_refresh(track);
 
-        m_status_text = L"Saved artwork to tag of currently playing file";
+        m_status_text = L"Saved artwork to tag of selected file";
     }
     catch (const std::exception& e) {
         std::wostringstream ss;
