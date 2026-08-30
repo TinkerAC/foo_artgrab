@@ -45,18 +45,15 @@ jobs:
             $fbOut = Join-Path $sdk 'foobar2000/SDK/x64/foobar2000_SDK'
             $pfcOut = Join-Path $sdk 'pfc/x64/pfc'
             $cuiOut = Join-Path $sdk 'columns_ui-sdk/x64/columns_ui_sdk'
-            $sharedName = 'shared-x64.lib'
           } else {
             $fbOut = Join-Path $sdk 'foobar2000/SDK/win32/foobar2000_SDK'
             $pfcOut = Join-Path $sdk 'pfc/win32/pfc'
             $cuiOut = Join-Path $sdk 'columns_ui-sdk/win32/columns_ui_sdk'
-            $sharedName = 'shared-Win32.lib'
           }
           New-Item -ItemType Directory -Force $fbOut, $pfcOut, $cuiOut | Out-Null
           Copy-Item "$built/foobar2000_SDK/foobar2000_SDK.lib" "$fbOut/foobar2000_SDK.lib"
           Copy-Item "$built/pfc/pfc.lib" "$pfcOut/pfc.lib"
-          Copy-Item "$built/columns_ui-sdk/columns_ui-sdk.lib" "$cuiOut/columns_ui_sdk.lib"
-          Copy-Item "$built/shared.lib" (Join-Path $sdk "foobar2000/shared/$sharedName")
+          Copy-Item "$built/columns_ui_sdk/columns_ui_sdk.lib" "$cuiOut/columns_ui_sdk.lib"
 
       - name: Build foo_artgrab
         shell: pwsh
