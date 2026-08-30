@@ -701,7 +701,7 @@ void artwork_search::fetch_artist_images(const std::vector<pfc::string8>& artist
 // Multi-result JSON parsers
 // ============================================================================
 
-bool artwork_search::parse_netease_json_multi(const char* artist, const char* title,
+bool artwork_search::parse_netease_json_multi(const char* /*artist*/, const char* /*title*/,
     const pfc::string8& json_in, std::vector<pfc::string8>& urls, int max_results) {
     try {
         json data = json::parse(std::string(json_in.get_ptr()));
@@ -712,21 +712,7 @@ bool artwork_search::parse_netease_json_multi(const char* artist, const char* ti
         }
 
         const json& songs = data["result"]["songs"];
-        const std::string wanted_artist(artist);
-        const std::string wanted_title(title);
         std::set<std::string> seen_urls;
-
-        auto item_artist_matches = [&](const json& item) {
-            if (item.contains("ar") && item["ar"].is_array()) {
-                for (const auto& item_artist : item["ar"]) {
-                    if (item_artist.contains("name") && item_artist["name"].is_string() &&
-                        artists_match(item_artist["name"].get<std::string>(), wanted_artist)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
 
         auto add_url = [&](const json& item) {
             if (!item.contains("al") || !item["al"].is_object() ||
@@ -739,14 +725,12 @@ bool artwork_search::parse_netease_json_multi(const char* artist, const char* ti
             if (seen_urls.insert(image_url).second) urls.emplace_back(image_url.c_str());
         };
 
-        // Only use matching songs by the requested artist; unrelated tracks often
-        // have different artwork even when they are from the same artist.
+        // Cloud Search already ranks songs for the "artist title" query. Preserve
+        // that order and only remove duplicate/missing artwork URLs; applying a
+        // second strict title/artist filter drops valid live, remaster and alias results.
         for (const auto& item : songs) {
             if ((int)urls.size() >= max_results) break;
-            if (!item.contains("name") || !item["name"].is_string()) continue;
-            if (strings_match_fuzzy(item["name"].get<std::string>(), wanted_title) && item_artist_matches(item)) {
-                add_url(item);
-            }
+            add_url(item);
         }
         return !urls.empty();
     } catch (const std::exception&) {
