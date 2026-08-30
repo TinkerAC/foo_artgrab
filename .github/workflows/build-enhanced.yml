@@ -12,14 +12,15 @@ jobs:
   build:
     runs-on: windows-2022
     strategy:
+      fail-fast: false
       matrix:
         platform: [x64, Win32]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
       - name: Set up MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Download matching foobar2000 and Columns UI SDKs
         shell: pwsh
@@ -34,7 +35,9 @@ jobs:
         shell: pwsh
         run: |
           $sdk = Resolve-Path src/columns_ui
-          msbuild "$sdk/vc18/columns_ui-public.sln" /m /t:pfc,foobar2000_SDK,columns_ui_sdk,shared /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:PlatformToolset=v143
+          git -C C:/vcpkg pull
+          vcpkg integrate install
+          msbuild "$sdk/vc18/columns_ui-public.sln" /m /t:Build /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:PlatformToolset=v143
 
           $arch = "${{ matrix.platform }}".ToLower()
           $built = Join-Path $sdk "vc18/release-$arch-v143"
@@ -69,7 +72,7 @@ jobs:
           Compress-Archive -Path "$staging/*" -DestinationPath "foo_artgrab-${{ matrix.platform }}.zip"
           Move-Item "foo_artgrab-${{ matrix.platform }}.zip" "foo_artgrab-${{ matrix.platform }}.fb2k-component"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: foo_artgrab-enhanced-${{ matrix.platform }}
           path: foo_artgrab-${{ matrix.platform }}.fb2k-component
